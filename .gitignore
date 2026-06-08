@@ -1,0 +1,22 @@
+# Maven build output
+target/
+
+# IDE metadata
+.idea/
+*.iml
+.vscode/
+*.class
+
+# WebDriverManager cache
+.wdm/
+
+# Allure reports (generated artifacts)
+allure-report/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Environment overrides (never commit credentials)
+*.env
+local-override.properties
