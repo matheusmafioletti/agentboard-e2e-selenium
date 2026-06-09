@@ -1,15 +1,18 @@
 @e2e @auth
-Feature: User Registration
-  As a new user
-  I want to create an account and workspace in AgentBoard
-  So that I can start managing my projects
+Feature: Authentication — Register
+  As a new user I want to create an account with a workspace
 
-  Scenario: Successful registration with valid data
+  # TC-AUTH-001
+  Scenario: Successful registration creates user and workspace
     Given I am on the registration page
-    When I register with name "Alice", email "alice@test.com", password "secret123", and workspace "Alice's Team"
-    Then I should be registered and redirected to the board
+    When I register with a unique email, password "Abc12345!" and workspace "My WS"
+    Then I should be redirected to the dashboard
+    And the workspace "My WS" should be shown in the sidebar
 
-  Scenario: Registration fails when email is already taken
-    Given I am on the registration page
-    When I register with name "Bob", email "alice@test.com", password "secret123", and workspace "Bob's Team"
-    Then I should see a registration error message
+  # TC-AUTH-002
+  Scenario: Registration with existing email shows error
+    Given a user with email "existing@test.com" already exists
+    And I am on the registration page
+    When I try to register with email "existing@test.com" and password "Abc12345!"
+    Then I should see a registration error
+    And I should remain on the register page

@@ -98,7 +98,7 @@ public abstract class BasePage {
    * @param locator element locator
    * @return visibility status
    */
-  protected boolean isVisible(By locator) {
+  public boolean isVisible(By locator) {
     try {
       return driver.findElement(locator).isDisplayed();
     } catch (Exception e) {

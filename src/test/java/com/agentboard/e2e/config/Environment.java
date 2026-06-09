@@ -16,6 +16,16 @@ public interface Environment extends Config {
   @DefaultValue("http://localhost:5173")
   String appBaseUrl();
 
+  /** Base URL of the AgentBoard auth service. */
+  @Key("auth.base.url")
+  @DefaultValue("http://localhost:8080")
+  String authBaseUrl();
+
+  /** Base URL of the AgentBoard board service. */
+  @Key("board.base.url")
+  @DefaultValue("http://localhost:8081")
+  String boardBaseUrl();
+
   /** Browser to use: {@code chrome} or {@code firefox}. */
   @Key("browser")
   @DefaultValue("chrome")
