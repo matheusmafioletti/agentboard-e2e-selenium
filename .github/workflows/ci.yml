@@ -36,10 +36,14 @@ jobs:
       - name: Run E2E tests (headless)
         run: |
           mvn test \
-            -Denv=local \
+            -Denv=staging \
             -Dbrowser=${{ github.event.inputs.browser || 'chrome' }} \
             -Dheadless=true \
             -Dcucumber.filter.tags="${{ github.event.inputs.tags || '@e2e and not @wip' }}"
+        env:
+          APP_BASE_URL: ${{ vars.BASE_URL || 'https://agentboard.matheusmafioletti.com' }}
+          AUTH_BASE_URL: ${{ vars.AUTH_API_URL || 'https://agentboard.matheusmafioletti.com' }}
+          BOARD_BASE_URL: ${{ vars.BOARD_API_URL || 'https://agentboard.matheusmafioletti.com' }}
 
       - name: Generate Allure report
         if: always()

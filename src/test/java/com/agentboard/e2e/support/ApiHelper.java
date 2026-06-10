@@ -64,7 +64,7 @@ public final class ApiHelper {
   public static String createProject(
       String boardUrl, String jwt, String tenantId, String projectName) {
     JSONObject body = new JSONObject().put("name", projectName);
-    JSONObject response = post(boardUrl + "/projects", body.toString(), jwt, tenantId);
+    JSONObject response = post(boardUrl + "/api/v1/projects", body.toString(), jwt, tenantId);
     return response.getString("id");
   }
 
@@ -84,7 +84,7 @@ public final class ApiHelper {
       String projectId, String title, String type) {
     JSONObject body = new JSONObject().put("title", title).put("type", type);
     JSONObject response = post(
-        boardUrl + "/projects/" + projectId + "/work-items",
+        boardUrl + "/api/v1/work-items?projectId=" + projectId,
         body.toString(), jwt, tenantId);
     return response.getString("id");
   }
