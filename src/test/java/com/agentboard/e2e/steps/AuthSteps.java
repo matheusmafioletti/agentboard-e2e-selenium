@@ -1,17 +1,19 @@
 package com.agentboard.e2e.steps;
 
+import com.agentboard.e2e.api.services.TestDataService;
+import com.agentboard.e2e.api.types.UserCredentials;
+import com.agentboard.e2e.api.types.UserInfo;
 import com.agentboard.e2e.config.Environment;
 import com.agentboard.e2e.pages.DashboardPage;
 import com.agentboard.e2e.pages.LoginPage;
 import com.agentboard.e2e.pages.RegisterPage;
-import com.agentboard.e2e.support.ApiHelper;
+import com.agentboard.e2e.support.BrowserAuth;
+import com.agentboard.e2e.support.Generators;
 import com.agentboard.e2e.support.ScenarioContext;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import java.util.List;
-import java.util.Map;
 import org.openqa.selenium.WebDriver;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -19,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Cucumber step definitions for authentication flows (login, register, session).
  *
- * <p>User creation steps generate unique credentials via {@link ApiHelper} so that scenarios
+ * <p>User creation steps generate unique credentials via {@link TestDataService} so that scenarios
  * are idempotent across multiple runs. Gherkin email literals serve as logical labels only;
  * the actual email used is stored in {@code ScenarioContext} under the key
  * {@code user_<label>_email}.
@@ -28,9 +30,6 @@ public class AuthSteps {
 
   private LoginPage loginPage;
 
-  // -------------------------------------------------------------------------
-  // Background / page setup
-  // -------------------------------------------------------------------------
 
   /**
    * Navigates to the login page and initialises the {@link LoginPage} object.
@@ -56,9 +55,6 @@ public class AuthSteps {
     ScenarioContext.set("registerPage", registerPage);
   }
 
-  // -------------------------------------------------------------------------
-  // User creation preconditions
-  // -------------------------------------------------------------------------
 
   /**
    * Creates a user via API so the login form can submit real credentials.
@@ -73,15 +69,14 @@ public class AuthSteps {
   @Given("a user {string} with password {string} and workspace {string} exists")
   public void aUserWithPasswordAndWorkspaceExists(
       String emailLabel, String password, String tenantName) {
-    Environment env = ScenarioContext.get("env", Environment.class);
-    String email = ApiHelper.generateEmail();
-    Map<String, String> user = ApiHelper.createUser(
-        env.authBaseUrl(), email, password, tenantName);
+    String email = Generators.generateEmail();
+    UserCredentials user = TestDataService.INSTANCE.createAuthenticatedUser(
+        email, password, tenantName);
     ScenarioContext.set("user_" + emailLabel + "_email", email);
     ScenarioContext.set("user_" + emailLabel + "_password", password);
     ScenarioContext.set("user_" + emailLabel + "_tenantName", tenantName);
-    ScenarioContext.set("user_" + emailLabel + "_token", user.get("token"));
-    ScenarioContext.set("user_" + emailLabel + "_tenantId", user.get("tenantId"));
+    ScenarioContext.set("user_" + emailLabel + "_token", user.jwt());
+    ScenarioContext.set("user_" + emailLabel + "_tenantId", user.tenantId());
   }
 
   /**
@@ -93,14 +88,11 @@ public class AuthSteps {
    */
   @Given("a user {string} with password {string} belongs to 2 workspaces")
   public void aUserBelongsTo2Workspaces(String emailLabel, String password) {
-    Environment env = ScenarioContext.get("env", Environment.class);
-    String email = ApiHelper.generateEmail();
+    String email = Generators.generateEmail();
     String ws1 = emailLabel.replace("@test.com", "") + " WS 1";
-    Map<String, String> user = ApiHelper.createUser(
-        env.authBaseUrl(), email, password, ws1);
-    String jwt = user.get("token");
+    UserCredentials user = TestDataService.INSTANCE.createAuthenticatedUser(email, password, ws1);
     String ws2 = emailLabel.replace("@test.com", "") + " WS 2";
-    ApiHelper.createTenant(env.authBaseUrl(), jwt, ws2);
+    TestDataService.INSTANCE.createSecondTenant(user.jwt(), ws2);
 
     ScenarioContext.set("user_" + emailLabel + "_email", email);
     ScenarioContext.set("user_" + emailLabel + "_password", password);
@@ -115,9 +107,8 @@ public class AuthSteps {
    */
   @Given("a user with email {string} already exists")
   public void aUserWithEmailAlreadyExists(String email) {
-    Environment env = ScenarioContext.get("env", Environment.class);
-    String generatedEmail = ApiHelper.generateEmail();
-    ApiHelper.createUser(env.authBaseUrl(), generatedEmail, "Abc12345!", "Existing WS");
+    String generatedEmail = Generators.generateEmail();
+    TestDataService.INSTANCE.createAuthenticatedUser(generatedEmail, "Abc12345!", "Existing WS");
     ScenarioContext.set("existing_email", email);
     ScenarioContext.set("existing_real_email", generatedEmail);
   }
@@ -132,26 +123,20 @@ public class AuthSteps {
   public void iAmAuthenticatedAsUserWith2Workspaces(String ws1, String ws2) {
     Environment env = ScenarioContext.get("env", Environment.class);
     WebDriver driver = ScenarioContext.getDriver();
-    String email = ApiHelper.generateEmail();
-    Map<String, String> user = ApiHelper.createUser(
-        env.authBaseUrl(), email, "Abc12345!", ws1);
-    String jwt = user.get("token");
-    ApiHelper.createTenant(env.authBaseUrl(), jwt, ws2);
+    String email = Generators.generateEmail();
+    UserCredentials user = TestDataService.INSTANCE.createAuthenticatedUser(email, "Abc12345!", ws1);
+    TestDataService.INSTANCE.createSecondTenant(user.jwt(), ws2);
 
     driver.get(env.appBaseUrl() + "/login");
-    ApiHelper.setAuthInLocalStorage(driver, jwt, email, email,
-        user.get("tenantId"), ws1, "ADMIN");
+    BrowserAuth.setAuthInLocalStorage(driver, user.jwt(), user.toUserInfo());
 
     ScenarioContext.set("ws1", ws1);
     ScenarioContext.set("ws2", ws2);
-    ScenarioContext.set("currentJwt", jwt);
-    ScenarioContext.set("currentTenantId", user.get("tenantId"));
+    ScenarioContext.set("currentJwt", user.jwt());
+    ScenarioContext.set("currentTenantId", user.tenantId());
     ScenarioContext.set("currentEmail", email);
   }
 
-  // -------------------------------------------------------------------------
-  // Login steps
-  // -------------------------------------------------------------------------
 
   /**
    * Enters credentials into the login form, resolving the actual email from context when
@@ -276,9 +261,6 @@ public class AuthSteps {
         "Expected error containing '" + expectedMessage + "' but got: '" + actual + "'");
   }
 
-  // -------------------------------------------------------------------------
-  // Session / logout steps
-  // -------------------------------------------------------------------------
 
   /**
    * Ensures the browser has no active authentication (clears localStorage).
@@ -288,7 +270,7 @@ public class AuthSteps {
     WebDriver driver = ScenarioContext.getDriver();
     Environment env = ScenarioContext.get("env", Environment.class);
     driver.get(env.appBaseUrl() + "/login");
-    ApiHelper.clearAuthFromLocalStorage(driver);
+    BrowserAuth.clearAuthFromLocalStorage(driver);
   }
 
   /**
@@ -309,18 +291,22 @@ public class AuthSteps {
     String email = ScenarioContext.get("user_" + emailLabel + "_email", String.class);
 
     if (jwt == null) {
-      String generatedEmail = ApiHelper.generateEmail();
+      String generatedEmail = Generators.generateEmail();
       String ws = "Workspace-" + System.currentTimeMillis();
-      Map<String, String> user = ApiHelper.createUser(
-          env.authBaseUrl(), generatedEmail, "Abc12345!", ws);
-      jwt = user.get("token");
-      tenantId = user.get("tenantId");
+      UserCredentials user = TestDataService.INSTANCE.createAuthenticatedUser(
+          generatedEmail, "Abc12345!", ws);
+      jwt = user.jwt();
+      tenantId = user.tenantId();
       tenantName = ws;
       email = generatedEmail;
     }
 
     driver.get(env.appBaseUrl() + "/login");
-    ApiHelper.setAuthInLocalStorage(driver, jwt, email, email, tenantId, tenantName, "ADMIN");
+    BrowserAuth.setAuthInLocalStorage(
+        driver,
+        jwt,
+        new UserInfo(email, email, tenantId, tenantName, "ADMIN"));
+
     ScenarioContext.set("currentJwt", jwt);
     ScenarioContext.set("currentTenantId", tenantId);
     ScenarioContext.set("currentEmail", email);
@@ -366,9 +352,6 @@ public class AuthSteps {
         "Expected redirect to /login but URL was: " + driver.getCurrentUrl());
   }
 
-  // -------------------------------------------------------------------------
-  // Registration steps
-  // -------------------------------------------------------------------------
 
   /**
    * Registers with a unique auto-generated email, password, and workspace.
@@ -379,7 +362,7 @@ public class AuthSteps {
   @When("I register with a unique email, password {string} and workspace {string}")
   public void iRegisterWithUniqueEmailPasswordAndWorkspace(String password, String tenantName) {
     RegisterPage registerPage = ScenarioContext.get("registerPage", RegisterPage.class);
-    String email = ApiHelper.generateEmail();
+    String email = Generators.generateEmail();
     registerPage.register("Test User", email, password, tenantName);
     ScenarioContext.set("registeredEmail", email);
     ScenarioContext.set("registeredTenant", tenantName);
@@ -437,9 +420,6 @@ public class AuthSteps {
         "Expected to remain on /register after duplicate email");
   }
 
-  // -------------------------------------------------------------------------
-  // Session management steps (TC-AUTH-008)
-  // -------------------------------------------------------------------------
 
   /**
    * Asserts the dashboard is currently showing the expected workspace.
@@ -480,9 +460,6 @@ public class AuthSteps {
         "Expected active workspace '" + workspaceName + "' but sidebar shows: '" + actual + "'");
   }
 
-  // -------------------------------------------------------------------------
-  // Private helpers
-  // -------------------------------------------------------------------------
 
   private String resolveEmail(String emailLabel) {
     String stored = ScenarioContext.get("user_" + emailLabel + "_email", String.class);

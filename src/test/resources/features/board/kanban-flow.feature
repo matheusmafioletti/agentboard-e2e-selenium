@@ -3,13 +3,9 @@ Feature: Kanban Board
 
   Background:
     Given I am authenticated with a project that has work items
-
-  # TC-BOARD-001
   Scenario: Default board shows TASK columns
     When I navigate to the board
     Then the board should show columns: "New, Active, Closed"
-
-  # TC-BOARD-002
   Scenario Outline: Switch item type changes columns
     When I navigate to the board
     And I select item type "<type>"
@@ -19,44 +15,32 @@ Feature: Kanban Board
       | FEATURE    | 9     |
       | USER_STORY | 5     |
       | TASK       | 3     |
-
-  # TC-BOARD-003
   Scenario: Create work item appears in initial column
     When I navigate to the board with type TASK
     And I create a work item titled "My new task"
     Then the work item "My new task" should appear in the "New" column
-
-  # TC-BOARD-004
   Scenario: Drag card between columns persists status change
     Given a TASK "Drag Me" exists in "New" column
     When I drag the card "Drag Me" to the "Active" column
     Then the card "Drag Me" should be in the "Active" column
     When I reload the board
     Then the card "Drag Me" should still be in the "Active" column
-
-  # TC-BOARD-005
   Scenario: Filter by parent shows only child items
     Given I am on the TASK board with multiple user stories
     When I filter by parent "User Story Alpha"
     Then only tasks belonging to "User Story Alpha" should be visible
     When I clear the parent filter
     Then all tasks should be visible
-
-  # TC-BOARD-006
   Scenario: Card displays ID, type badge and parent reference
     Given a TASK with a parent User Story exists on the board
     When I view the card on the board
     Then the card should display the work item ID
     And the card should display an amber type badge
     And the card should reference its parent User Story
-
-  # TC-BOARD-007
   Scenario: Open child board from Feature card
     Given a Feature with User Stories exists on the board
     When I click "view child board" on the Feature card
     Then the User Story board should open with that Feature pre-selected as parent filter
-
-  # TC-BOARD-008
   Scenario: Click on card opens detail modal
     Given a work item exists on the board
     When I click on the card title

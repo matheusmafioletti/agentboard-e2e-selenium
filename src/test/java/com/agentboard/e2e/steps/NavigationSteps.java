@@ -12,13 +12,10 @@ import org.openqa.selenium.WebDriver;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Cucumber step definitions for navigation and sidebar validation (TC-NAV-001/002/003).
+ * Cucumber step definitions for navigation and sidebar validation.
  */
 public class NavigationSteps {
 
-  // -------------------------------------------------------------------------
-  // Sidebar
-  // -------------------------------------------------------------------------
 
   /**
    * Navigates to the dashboard so the sidebar is visible.
@@ -58,9 +55,6 @@ public class NavigationSteps {
         "Expected sidebar to NOT contain link '" + linkText + "' for USER role");
   }
 
-  // -------------------------------------------------------------------------
-  // Dashboard summary cards (TC-NAV-003)
-  // -------------------------------------------------------------------------
 
   /**
    * Navigates to the dashboard page.
@@ -85,9 +79,6 @@ public class NavigationSteps {
         "Expected at least one summary card to be visible on the dashboard but found " + count);
   }
 
-  // -------------------------------------------------------------------------
-  // Private helpers
-  // -------------------------------------------------------------------------
 
   private DashboardPage getDashboard() {
     DashboardPage dashboard = ScenarioContext.get("dashboardPage", DashboardPage.class);

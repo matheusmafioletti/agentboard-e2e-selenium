@@ -1,7 +1,5 @@
 @e2e @auth
 Feature: Session Management
-
-  # TC-AUTH-008
   @wip
   Scenario: Switch workspace without logout
     Given I am authenticated as a user with 2 workspaces "WS A" and "WS B"

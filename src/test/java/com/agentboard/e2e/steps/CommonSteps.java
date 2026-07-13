@@ -1,19 +1,23 @@
 package com.agentboard.e2e.steps;
 
+import com.agentboard.e2e.api.services.TestDataService;
+import com.agentboard.e2e.api.types.UserCredentials;
+import com.agentboard.e2e.api.types.UserInfo;
+import com.agentboard.e2e.api.types.WorkItemType;
 import com.agentboard.e2e.config.Environment;
 import com.agentboard.e2e.pages.BoardPage;
 import com.agentboard.e2e.pages.DashboardPage;
-import com.agentboard.e2e.support.ApiHelper;
+import com.agentboard.e2e.support.BrowserAuth;
+import com.agentboard.e2e.support.Generators;
 import com.agentboard.e2e.support.ScenarioContext;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
-import java.util.Map;
 import org.openqa.selenium.WebDriver;
 
 /**
  * Cucumber step definitions shared across multiple feature files.
  *
- * <p>Authentication pre-conditions use {@link ApiHelper} to provision users and set
+ * <p>Authentication pre-conditions use {@link TestDataService} to provision users and set
  * {@code localStorage} directly, bypassing the login UI for non-auth scenarios.
  */
 public class CommonSteps {
@@ -27,23 +31,20 @@ public class CommonSteps {
     Environment env = ScenarioContext.get("env", Environment.class);
     WebDriver driver = ScenarioContext.getDriver();
 
-    String email = ApiHelper.generateEmail();
-    String tenantName = ApiHelper.generateTenantName();
-    Map<String, String> user = ApiHelper.createUser(
-        env.authBaseUrl(), email, "Abc12345!", tenantName);
+    String email = Generators.generateEmail();
+    String tenantName = Generators.generateTenantName();
+    UserCredentials user = TestDataService.INSTANCE.createAuthenticatedUser(
+        email, "Abc12345!", tenantName);
 
-    String jwt = user.get("token");
-    String tenantId = user.get("tenantId");
-
-    String projectId = ApiHelper.createProject(
-        env.boardBaseUrl(), jwt, tenantId, "Default Project");
+    String projectId = TestDataService.INSTANCE.createProject(
+        user.jwt(), user.tenantId(), "Default Project").id();
 
     driver.get(env.appBaseUrl() + "/login");
-    ApiHelper.setAuthInLocalStorage(driver, jwt, email, email, tenantId, tenantName, "ADMIN");
+    BrowserAuth.setAuthInLocalStorage(driver, user.jwt(), user.toUserInfo());
 
-    ScenarioContext.set("currentJwt", jwt);
-    ScenarioContext.set("currentTenantId", tenantId);
-    ScenarioContext.set("currentEmail", email);
+    ScenarioContext.set("currentJwt", user.jwt());
+    ScenarioContext.set("currentTenantId", user.tenantId());
+    ScenarioContext.set("currentEmail", user.email());
     ScenarioContext.set("currentTenantName", tenantName);
     ScenarioContext.set("currentProjectId", projectId);
 
@@ -60,29 +61,27 @@ public class CommonSteps {
     Environment env = ScenarioContext.get("env", Environment.class);
     WebDriver driver = ScenarioContext.getDriver();
 
-    String email = ApiHelper.generateEmail();
-    String tenantName = ApiHelper.generateTenantName();
-    Map<String, String> user = ApiHelper.createUser(
-        env.authBaseUrl(), email, "Abc12345!", tenantName);
+    String email = Generators.generateEmail();
+    String tenantName = Generators.generateTenantName();
+    UserCredentials user = TestDataService.INSTANCE.createAuthenticatedUser(
+        email, "Abc12345!", tenantName);
 
-    String jwt = user.get("token");
-    String tenantId = user.get("tenantId");
-    String projectId = ApiHelper.createProject(
-        env.boardBaseUrl(), jwt, tenantId, "Test Project");
+    String projectId = TestDataService.INSTANCE.createProject(
+        user.jwt(), user.tenantId(), "Test Project").id();
 
-    String featureId = ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Sample Feature", "FEATURE");
-    String storyId = ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Sample Story", "USER_STORY");
-    ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Sample Task", "TASK");
+    String featureId = TestDataService.INSTANCE.createWorkItem(
+        user.jwt(), user.tenantId(), projectId, "Sample Feature", WorkItemType.FEATURE).id();
+    String storyId = TestDataService.INSTANCE.createWorkItem(
+        user.jwt(), user.tenantId(), projectId, "Sample Story", WorkItemType.USER_STORY).id();
+    TestDataService.INSTANCE.createWorkItem(
+        user.jwt(), user.tenantId(), projectId, "Sample Task", WorkItemType.TASK);
 
     driver.get(env.appBaseUrl() + "/login");
-    ApiHelper.setAuthInLocalStorage(driver, jwt, email, email, tenantId, tenantName, "ADMIN");
+    BrowserAuth.setAuthInLocalStorage(driver, user.jwt(), user.toUserInfo());
 
-    ScenarioContext.set("currentJwt", jwt);
-    ScenarioContext.set("currentTenantId", tenantId);
-    ScenarioContext.set("currentEmail", email);
+    ScenarioContext.set("currentJwt", user.jwt());
+    ScenarioContext.set("currentTenantId", user.tenantId());
+    ScenarioContext.set("currentEmail", user.email());
     ScenarioContext.set("currentTenantName", tenantName);
     ScenarioContext.set("currentProjectId", projectId);
     ScenarioContext.set("currentFeatureId", featureId);
@@ -101,30 +100,28 @@ public class CommonSteps {
     Environment env = ScenarioContext.get("env", Environment.class);
     WebDriver driver = ScenarioContext.getDriver();
 
-    String email = ApiHelper.generateEmail();
-    String tenantName = ApiHelper.generateTenantName();
-    Map<String, String> user = ApiHelper.createUser(
-        env.authBaseUrl(), email, "Abc12345!", tenantName);
+    String email = Generators.generateEmail();
+    String tenantName = Generators.generateTenantName();
+    UserCredentials user = TestDataService.INSTANCE.createAuthenticatedUser(
+        email, "Abc12345!", tenantName);
 
-    String jwt = user.get("token");
-    String tenantId = user.get("tenantId");
-    String projectId = ApiHelper.createProject(
-        env.boardBaseUrl(), jwt, tenantId, "Items Project");
+    String projectId = TestDataService.INSTANCE.createProject(
+        user.jwt(), user.tenantId(), "Items Project").id();
 
-    String featureId = ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Feature Root", "FEATURE");
-    String detailFeatureId = ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Detail Test Item", "FEATURE");
-    ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Story Under Feature", "USER_STORY");
-    ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Standalone Task", "TASK");
+    String featureId = TestDataService.INSTANCE.createWorkItem(
+        user.jwt(), user.tenantId(), projectId, "Feature Root", WorkItemType.FEATURE).id();
+    TestDataService.INSTANCE.createWorkItem(
+        user.jwt(), user.tenantId(), projectId, "Detail Test Item", WorkItemType.FEATURE);
+    TestDataService.INSTANCE.createWorkItem(
+        user.jwt(), user.tenantId(), projectId, "Story Under Feature", WorkItemType.USER_STORY);
+    TestDataService.INSTANCE.createWorkItem(
+        user.jwt(), user.tenantId(), projectId, "Standalone Task", WorkItemType.TASK);
 
     driver.get(env.appBaseUrl() + "/login");
-    ApiHelper.setAuthInLocalStorage(driver, jwt, email, email, tenantId, tenantName, "ADMIN");
+    BrowserAuth.setAuthInLocalStorage(driver, user.jwt(), user.toUserInfo());
 
-    ScenarioContext.set("currentJwt", jwt);
-    ScenarioContext.set("currentTenantId", tenantId);
+    ScenarioContext.set("currentJwt", user.jwt());
+    ScenarioContext.set("currentTenantId", user.tenantId());
     ScenarioContext.set("currentProjectId", projectId);
     ScenarioContext.set("currentFeatureId", featureId);
   }
@@ -159,20 +156,20 @@ public class CommonSteps {
     Environment env = ScenarioContext.get("env", Environment.class);
     WebDriver driver = ScenarioContext.getDriver();
 
-    String email = ApiHelper.generateEmail();
-    String tenantName = ApiHelper.generateTenantName();
-    Map<String, String> user = ApiHelper.createUser(
-        env.authBaseUrl(), email, "Abc12345!", tenantName);
-
-    String jwt = user.get("token");
-    String tenantId = user.get("tenantId");
+    String email = Generators.generateEmail();
+    String tenantName = Generators.generateTenantName();
+    UserCredentials user = TestDataService.INSTANCE.createAuthenticatedUser(
+        email, "Abc12345!", tenantName);
 
     driver.get(env.appBaseUrl() + "/login");
-    ApiHelper.setAuthInLocalStorage(driver, jwt, email, email, tenantId, tenantName, "USER");
+    BrowserAuth.setAuthInLocalStorage(
+        driver,
+        user.jwt(),
+        new UserInfo(user.userId(), user.email(), user.tenantId(), tenantName, "USER"));
 
-    ScenarioContext.set("currentJwt", jwt);
-    ScenarioContext.set("currentTenantId", tenantId);
-    ScenarioContext.set("currentEmail", email);
+    ScenarioContext.set("currentJwt", user.jwt());
+    ScenarioContext.set("currentTenantId", user.tenantId());
+    ScenarioContext.set("currentEmail", user.email());
     ScenarioContext.set("currentTenantName", tenantName);
   }
 
@@ -184,14 +181,14 @@ public class CommonSteps {
   @Given("I am authenticated as an ADMIN with a pending invite for {string}")
   public void iAmAuthenticatedAsAdminWithPendingInviteFor(String email) {
     iAmAuthenticatedAsRegularAdminUser();
-    Environment env = ScenarioContext.get("env", Environment.class);
     String jwt = ScenarioContext.get("currentJwt", String.class);
     String tenantId = ScenarioContext.get("currentTenantId", String.class);
-    String inviteToken = ApiHelper.createInvite(env.authBaseUrl(), jwt, tenantId, email);
+    String inviteToken = TestDataService.INSTANCE.createInvite(jwt, tenantId, email).token();
     ScenarioContext.set("pendingInviteEmail", email);
     ScenarioContext.set("pendingInviteToken", inviteToken);
 
     WebDriver driver = ScenarioContext.getDriver();
+    Environment env = ScenarioContext.get("env", Environment.class);
     driver.get(env.appBaseUrl() + "/usuarios");
   }
 

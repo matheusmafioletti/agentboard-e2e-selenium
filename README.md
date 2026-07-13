@@ -71,6 +71,17 @@ mvn allure:serve
 ```
 src/test/
 ├── java/com/agentboard/e2e/
+│   ├── api/
+│   │   ├── clients/
+│   │   │   ├── BaseApiClient.java    # Shared HTTP transport, JSON headers
+│   │   │   ├── AuthApiClient.java    # Register, login, tenants, invites
+│   │   │   └── BoardApiClient.java   # Projects, work-items
+│   │   ├── services/
+│   │   │   └── TestDataService.java  # High-level test setup workflows (singleton INSTANCE)
+│   │   └── types/
+│   │       ├── UserCredentials.java  # Authenticated user + JWT
+│   │       ├── ProjectResult.java
+│   │       └── WorkItemType.java     # FEATURE | USER_STORY | TASK
 │   ├── config/
 │   │   ├── Environment.java      # Owner @Config — typed .properties binding
 │   │   └── DriverFactory.java    # Chrome / Firefox WebDriver creation
@@ -83,8 +94,11 @@ src/test/
 │   │   └── WebHooks.java         # @Before/@After driver lifecycle + failure screenshot
 │   ├── steps/
 │   │   ├── AuthSteps.java        # Login / register step definitions
-│   │   └── BoardSteps.java       # Kanban board step definitions
+│   │   ├── BoardSteps.java       # Kanban board step definitions
+│   │   └── CommonSteps.java      # Shared authentication pre-conditions
 │   ├── support/
+│   │   ├── BrowserAuth.java      # localStorage auth injection
+│   │   ├── Generators.java       # Unique email / tenant name generators
 │   │   └── ScenarioContext.java  # ThreadLocal state (safe for parallel runs)
 │   └── runners/
 │       └── CucumberRunner.java   # JUnit Platform Suite entry point
@@ -101,6 +115,35 @@ src/test/
     ├── allure.properties
     └── cucumber.properties
 ```
+
+### API Clients & Test Data Service (`api/`)
+
+HTTP calls are organized into service-specific clients that read base URLs from `Environment` config internally — step definitions never pass raw URLs:
+
+| Layer | Path | Responsibility |
+|---|---|---|
+| `BaseApiClient` | `api/clients/BaseApiClient.java` | Shared HTTP transport, JSON headers, error handling |
+| `AuthApiClient` | `api/clients/AuthApiClient.java` | Register, login, tenants, invites |
+| `BoardApiClient` | `api/clients/BoardApiClient.java` | Projects, work-items |
+| `TestDataService` | `api/services/TestDataService.java` | High-level test setup workflows |
+
+Step classes use the singleton `TestDataService.INSTANCE` for API setup — bypassing UI forms for fast, deterministic pre-conditions:
+
+```java
+import com.agentboard.e2e.api.services.TestDataService;
+import com.agentboard.e2e.api.types.UserCredentials;
+import com.agentboard.e2e.support.Generators;
+import com.agentboard.e2e.support.BrowserAuth;
+
+UserCredentials user = TestDataService.INSTANCE.createAuthenticatedUser(
+    Generators.generateEmail(), "Abc12345!", Generators.generateTenantName());
+String projectId = TestDataService.INSTANCE.createProject(
+    user.jwt(), user.tenantId(), "My Project").id();
+driver.get(env.appBaseUrl() + "/login");
+BrowserAuth.setAuthInLocalStorage(driver, user.jwt(), user.toUserInfo());
+```
+
+Domain types live in `api/types/`. Generators and browser helpers remain in `support/Generators.java` and `support/BrowserAuth.java`.
 
 ---
 

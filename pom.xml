@@ -103,7 +103,7 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- JSON parsing for ApiHelper -->
+    <!-- JSON parsing for API clients -->
     <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>

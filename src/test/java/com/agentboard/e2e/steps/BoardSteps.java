@@ -1,8 +1,9 @@
 package com.agentboard.e2e.steps;
 
+import com.agentboard.e2e.api.services.TestDataService;
+import com.agentboard.e2e.api.types.WorkItemType;
 import com.agentboard.e2e.config.Environment;
 import com.agentboard.e2e.pages.BoardPage;
-import com.agentboard.e2e.support.ApiHelper;
 import com.agentboard.e2e.support.ScenarioContext;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -10,7 +11,6 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import org.openqa.selenium.WebDriver;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,9 +20,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class BoardSteps {
 
-  // -------------------------------------------------------------------------
-  // Setup helpers (legacy compatibility)
-  // -------------------------------------------------------------------------
 
   /**
    * Logs in with the given email using the default test password and waits for the board.
@@ -55,9 +52,6 @@ public class BoardSteps {
     assertTrue(board.isLoaded(), "Expected the Kanban board to be visible");
   }
 
-  // -------------------------------------------------------------------------
-  // Navigation
-  // -------------------------------------------------------------------------
 
   /**
    * Navigates to the default board view.
@@ -77,9 +71,6 @@ public class BoardSteps {
     board.navigateWithType("TASK");
   }
 
-  // -------------------------------------------------------------------------
-  // Column assertions
-  // -------------------------------------------------------------------------
 
   /**
    * Asserts the board shows exactly the expected comma-separated columns.
@@ -114,9 +105,6 @@ public class BoardSteps {
         "Expected " + count + " board columns but found " + actual);
   }
 
-  // -------------------------------------------------------------------------
-  // Type switcher
-  // -------------------------------------------------------------------------
 
   /**
    * Selects the given item type via the board type selector control.
@@ -129,9 +117,6 @@ public class BoardSteps {
     board.selectItemType(type);
   }
 
-  // -------------------------------------------------------------------------
-  // Work item creation
-  // -------------------------------------------------------------------------
 
   /**
    * Creates a new work item with the given title via the board's creation modal.
@@ -147,9 +132,6 @@ public class BoardSteps {
     ScenarioContext.set("lastCreatedItem", title);
   }
 
-  // -------------------------------------------------------------------------
-  // Card assertions
-  // -------------------------------------------------------------------------
 
   /**
    * Asserts a work item appears in the specified column.
@@ -191,9 +173,6 @@ public class BoardSteps {
         "Expected " + expectedCount + " item(s) in column '" + status + "' but found " + actual);
   }
 
-  // -------------------------------------------------------------------------
-  // Drag and drop (TC-BOARD-004)
-  // -------------------------------------------------------------------------
 
   /**
    * Pre-condition: creates a TASK work item in the "New" status column via API.
@@ -202,7 +181,6 @@ public class BoardSteps {
    */
   @Given("a TASK {string} exists in {string} column")
   public void aTaskExistsInColumn(String taskTitle, String columnName) {
-    Environment env = ScenarioContext.get("env", Environment.class);
     String jwt = ScenarioContext.get("currentJwt", String.class);
     String tenantId = ScenarioContext.get("currentTenantId", String.class);
     String projectId = ScenarioContext.get("currentProjectId", String.class);
@@ -214,7 +192,8 @@ public class BoardSteps {
       projectId = ScenarioContext.get("currentProjectId", String.class);
     }
 
-    ApiHelper.createWorkItem(env.boardBaseUrl(), jwt, tenantId, projectId, taskTitle, "TASK");
+    TestDataService.INSTANCE.createWorkItem(
+        jwt, tenantId, projectId, taskTitle, WorkItemType.TASK);
     ScenarioContext.set("dragTaskTitle", taskTitle);
 
     BoardPage board = getOrCreateBoard();
@@ -266,18 +245,12 @@ public class BoardSteps {
     theCardShouldBeInTheColumn(cardTitle, columnName);
   }
 
-  // -------------------------------------------------------------------------
-  // Parent filter (TC-BOARD-005)
-  // -------------------------------------------------------------------------
 
   /**
    * Pre-condition: sets up a TASK board with multiple user stories and tasks.
    */
   @Given("I am on the TASK board with multiple user stories")
   public void iAmOnTheTaskBoardWithMultipleUserStories() {
-    Environment env = ScenarioContext.get("env", Environment.class);
-    WebDriver driver = ScenarioContext.getDriver();
-
     String jwt = ScenarioContext.get("currentJwt", String.class);
     String tenantId = ScenarioContext.get("currentTenantId", String.class);
     String projectId = ScenarioContext.get("currentProjectId", String.class);
@@ -289,12 +262,12 @@ public class BoardSteps {
       projectId = ScenarioContext.get("currentProjectId", String.class);
     }
 
-    String storyAlphaId = ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "User Story Alpha", "USER_STORY");
-    ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Task Alpha 1", "TASK");
-    ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Task Beta 1", "TASK");
+    String storyAlphaId = TestDataService.INSTANCE.createWorkItem(
+        jwt, tenantId, projectId, "User Story Alpha", WorkItemType.USER_STORY).id();
+    TestDataService.INSTANCE.createWorkItem(
+        jwt, tenantId, projectId, "Task Alpha 1", WorkItemType.TASK);
+    TestDataService.INSTANCE.createWorkItem(
+        jwt, tenantId, projectId, "Task Beta 1", WorkItemType.TASK);
     ScenarioContext.set("storyAlphaId", storyAlphaId);
 
     BoardPage board = getOrCreateBoard();
@@ -342,16 +315,12 @@ public class BoardSteps {
         "Expected at least one task to be visible after clearing the filter");
   }
 
-  // -------------------------------------------------------------------------
-  // Card metadata (TC-BOARD-006)
-  // -------------------------------------------------------------------------
 
   /**
    * Pre-condition: creates a task with a parent user story on the board.
    */
   @Given("a TASK with a parent User Story exists on the board")
   public void aTaskWithParentUserStoryExistsOnBoard() {
-    Environment env = ScenarioContext.get("env", Environment.class);
     String jwt = ScenarioContext.get("currentJwt", String.class);
     String tenantId = ScenarioContext.get("currentTenantId", String.class);
     String projectId = ScenarioContext.get("currentProjectId", String.class);
@@ -363,10 +332,10 @@ public class BoardSteps {
       projectId = ScenarioContext.get("currentProjectId", String.class);
     }
 
-    String storyId = ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Parent Story", "USER_STORY");
-    ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Child Task", "TASK");
+    TestDataService.INSTANCE.createWorkItem(
+        jwt, tenantId, projectId, "Parent Story", WorkItemType.USER_STORY);
+    TestDataService.INSTANCE.createWorkItem(
+        jwt, tenantId, projectId, "Child Task", WorkItemType.TASK);
 
     BoardPage board = getOrCreateBoard();
     board.navigateWithType("TASK");
@@ -409,16 +378,12 @@ public class BoardSteps {
     assertTrue(board.isLoaded(), "Expected board to still be loaded while checking parent ref");
   }
 
-  // -------------------------------------------------------------------------
-  // Child board navigation (TC-BOARD-007)
-  // -------------------------------------------------------------------------
 
   /**
    * Pre-condition: ensures a Feature with user stories exists.
    */
   @Given("a Feature with User Stories exists on the board")
   public void aFeatureWithUserStoriesExistsOnBoard() {
-    Environment env = ScenarioContext.get("env", Environment.class);
     String jwt = ScenarioContext.get("currentJwt", String.class);
     String tenantId = ScenarioContext.get("currentTenantId", String.class);
     String projectId = ScenarioContext.get("currentProjectId", String.class);
@@ -430,10 +395,10 @@ public class BoardSteps {
       projectId = ScenarioContext.get("currentProjectId", String.class);
     }
 
-    String featureId = ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Navigation Feature", "FEATURE");
-    ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, "Story Under Feature", "USER_STORY");
+    String featureId = TestDataService.INSTANCE.createWorkItem(
+        jwt, tenantId, projectId, "Navigation Feature", WorkItemType.FEATURE).id();
+    TestDataService.INSTANCE.createWorkItem(
+        jwt, tenantId, projectId, "Story Under Feature", WorkItemType.USER_STORY);
     ScenarioContext.set("navFeatureId", featureId);
     ScenarioContext.set("navFeatureTitle", "Navigation Feature");
 
@@ -464,16 +429,12 @@ public class BoardSteps {
         "Expected to be on the board page but URL was: " + driver.getCurrentUrl());
   }
 
-  // -------------------------------------------------------------------------
-  // Detail modal (TC-BOARD-008)
-  // -------------------------------------------------------------------------
 
   /**
    * Pre-condition: creates a work item on the board.
    */
   @Given("a work item exists on the board")
   public void aWorkItemExistsOnTheBoard() {
-    Environment env = ScenarioContext.get("env", Environment.class);
     String jwt = ScenarioContext.get("currentJwt", String.class);
     String tenantId = ScenarioContext.get("currentTenantId", String.class);
     String projectId = ScenarioContext.get("currentProjectId", String.class);
@@ -486,8 +447,8 @@ public class BoardSteps {
     }
 
     String taskTitle = "Click Detail Task";
-    ApiHelper.createWorkItem(
-        env.boardBaseUrl(), jwt, tenantId, projectId, taskTitle, "TASK");
+    TestDataService.INSTANCE.createWorkItem(
+        jwt, tenantId, projectId, taskTitle, WorkItemType.TASK);
     ScenarioContext.set("clickDetailTitle", taskTitle);
 
     BoardPage board = getOrCreateBoard();
@@ -528,9 +489,6 @@ public class BoardSteps {
         "Expected detail modal to still be visible when checking title/type");
   }
 
-  // -------------------------------------------------------------------------
-  // Private helpers
-  // -------------------------------------------------------------------------
 
   private BoardPage getOrCreateBoard() {
     BoardPage board = ScenarioContext.get("boardPage", BoardPage.class);

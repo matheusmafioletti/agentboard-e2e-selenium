@@ -1,8 +1,8 @@
 package com.agentboard.e2e.steps;
 
+import com.agentboard.e2e.api.services.TestDataService;
 import com.agentboard.e2e.config.Environment;
 import com.agentboard.e2e.pages.ProjectsPage;
-import com.agentboard.e2e.support.ApiHelper;
 import com.agentboard.e2e.support.ScenarioContext;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -12,13 +12,10 @@ import org.openqa.selenium.WebDriver;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Cucumber step definitions for the project management screens (TC-PROJ-001/002/003).
+ * Cucumber step definitions for the project management screens.
  */
 public class ProjectSteps {
 
-  // -------------------------------------------------------------------------
-  // Pre-conditions
-  // -------------------------------------------------------------------------
 
   /**
    * Navigates to the projects listing page.
@@ -36,14 +33,13 @@ public class ProjectSteps {
    */
   @Given("I am on the projects page with at least one project")
   public void iAmOnTheProjectsPageWithAtLeastOneProject() {
-    Environment env = ScenarioContext.get("env", Environment.class);
     String jwt = ScenarioContext.get("currentJwt", String.class);
     String tenantId = ScenarioContext.get("currentTenantId", String.class);
     String projectId = ScenarioContext.get("currentProjectId", String.class);
 
     if (projectId == null && jwt != null) {
-      projectId = ApiHelper.createProject(
-          env.boardBaseUrl(), jwt, tenantId, "Pre-existing Project");
+      projectId = TestDataService.INSTANCE.createProject(
+          jwt, tenantId, "Pre-existing Project").id();
       ScenarioContext.set("currentProjectId", projectId);
     }
 
@@ -60,12 +56,11 @@ public class ProjectSteps {
    */
   @Given("I have 2 projects {string} and {string}")
   public void iHave2Projects(String project1, String project2) {
-    Environment env = ScenarioContext.get("env", Environment.class);
     String jwt = ScenarioContext.get("currentJwt", String.class);
     String tenantId = ScenarioContext.get("currentTenantId", String.class);
 
-    ApiHelper.createProject(env.boardBaseUrl(), jwt, tenantId, project1);
-    ApiHelper.createProject(env.boardBaseUrl(), jwt, tenantId, project2);
+    TestDataService.INSTANCE.createProject(jwt, tenantId, project1);
+    TestDataService.INSTANCE.createProject(jwt, tenantId, project2);
 
     ScenarioContext.set("project1Name", project1);
     ScenarioContext.set("project2Name", project2);
@@ -75,9 +70,6 @@ public class ProjectSteps {
     ScenarioContext.set("projectsPage", page);
   }
 
-  // -------------------------------------------------------------------------
-  // Actions
-  // -------------------------------------------------------------------------
 
   /**
    * Creates a new project with the given name via the UI.
@@ -127,9 +119,6 @@ public class ProjectSteps {
     ScenarioContext.set("selectedProject", projectName);
   }
 
-  // -------------------------------------------------------------------------
-  // Assertions
-  // -------------------------------------------------------------------------
 
   /**
    * Asserts the newly created project appears in the project list.
@@ -176,9 +165,6 @@ public class ProjectSteps {
     }
   }
 
-  // -------------------------------------------------------------------------
-  // Private helpers
-  // -------------------------------------------------------------------------
 
   private ProjectsPage getOrCreateProjectsPage() {
     ProjectsPage page = ScenarioContext.get("projectsPage", ProjectsPage.class);

@@ -1,29 +1,28 @@
 package com.agentboard.e2e.steps;
 
+import com.agentboard.e2e.api.services.TestDataService;
+import com.agentboard.e2e.api.types.UserCredentials;
 import com.agentboard.e2e.config.Environment;
 import com.agentboard.e2e.pages.DashboardPage;
 import com.agentboard.e2e.pages.InviteAcceptPage;
 import com.agentboard.e2e.pages.UsersPage;
-import com.agentboard.e2e.support.ApiHelper;
+import com.agentboard.e2e.support.BrowserAuth;
+import com.agentboard.e2e.support.Generators;
 import com.agentboard.e2e.support.ScenarioContext;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.util.List;
-import java.util.Map;
 import org.openqa.selenium.WebDriver;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Cucumber step definitions for user management scenarios (TC-USERS-001 through TC-USERS-006).
+ * Cucumber step definitions for user management scenarios.
  */
 public class UsersSteps {
 
-  // -------------------------------------------------------------------------
-  // Pre-conditions
-  // -------------------------------------------------------------------------
 
   /**
    * Navigates to the users management page.
@@ -46,24 +45,20 @@ public class UsersSteps {
     Environment env = ScenarioContext.get("env", Environment.class);
     WebDriver driver = ScenarioContext.getDriver();
 
-    String adminEmail = ApiHelper.generateEmail();
-    Map<String, String> admin = ApiHelper.createUser(
-        env.authBaseUrl(), adminEmail, "Abc12345!", tenantName);
-    String jwt = admin.get("token");
-    String tenantId = admin.get("tenantId");
+    String adminEmail = Generators.generateEmail();
+    UserCredentials admin = TestDataService.INSTANCE.createAuthenticatedUser(
+        adminEmail, "Abc12345!", tenantName);
 
-    String inviteToken = ApiHelper.createInvite(env.authBaseUrl(), jwt, tenantId, email);
+    String inviteToken = TestDataService.INSTANCE.createInvite(
+        admin.jwt(), admin.tenantId(), email).token();
     ScenarioContext.set("inviteToken", inviteToken);
     ScenarioContext.set("inviteTenantName", tenantName);
     ScenarioContext.set("invitedEmail", email);
 
     driver.get(env.appBaseUrl() + "/login");
-    ApiHelper.clearAuthFromLocalStorage(driver);
+    BrowserAuth.clearAuthFromLocalStorage(driver);
   }
 
-  // -------------------------------------------------------------------------
-  // TC-USERS-001/002: Members list and access control
-  // -------------------------------------------------------------------------
 
   /**
    * Asserts the members list section is visible.
@@ -108,9 +103,6 @@ public class UsersSteps {
         "Expected sidebar link '" + linkText + "' to NOT be visible for USER role");
   }
 
-  // -------------------------------------------------------------------------
-  // TC-USERS-003: Create invite
-  // -------------------------------------------------------------------------
 
   /**
    * Creates an invite for the given email via the users page UI.
@@ -137,9 +129,6 @@ public class UsersSteps {
         "Expected '" + email + "' in pending invites but found: " + pending);
   }
 
-  // -------------------------------------------------------------------------
-  // TC-USERS-004: Cancel invite
-  // -------------------------------------------------------------------------
 
   /**
    * Cancels the pending invite for the given email via the users page UI.
@@ -166,9 +155,6 @@ public class UsersSteps {
         "Expected '" + email + "' to be removed from pending invites but still found: " + pending);
   }
 
-  // -------------------------------------------------------------------------
-  // TC-USERS-005: Accept invite
-  // -------------------------------------------------------------------------
 
   /**
    * Navigates to the invite acceptance URL.
@@ -237,9 +223,6 @@ public class UsersSteps {
         "Expected USER role context after accepting invite");
   }
 
-  // -------------------------------------------------------------------------
-  // TC-USERS-006: Invalid token
-  // -------------------------------------------------------------------------
 
   /**
    * Asserts an error message is displayed on the invite page.
@@ -263,9 +246,6 @@ public class UsersSteps {
         "Expected registration form to be hidden for invalid invite token");
   }
 
-  // -------------------------------------------------------------------------
-  // Private helpers
-  // -------------------------------------------------------------------------
 
   private UsersPage getOrCreateUsersPage() {
     UsersPage page = ScenarioContext.get("usersPage", UsersPage.class);

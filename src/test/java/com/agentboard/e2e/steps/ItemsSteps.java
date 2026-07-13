@@ -12,13 +12,10 @@ import org.openqa.selenium.WebDriver;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Cucumber step definitions for the items list view (TC-ITEMS-001/002/003/004).
+ * Cucumber step definitions for the items list view.
  */
 public class ItemsSteps {
 
-  // -------------------------------------------------------------------------
-  // Navigation
-  // -------------------------------------------------------------------------
 
   /**
    * Navigates to the items list page ({@code /itens}).
@@ -30,9 +27,6 @@ public class ItemsSteps {
     ScenarioContext.set("itemsPage", page);
   }
 
-  // -------------------------------------------------------------------------
-  // Assertions — TC-ITEMS-001
-  // -------------------------------------------------------------------------
 
   /**
    * Asserts the items table is visible on the page.
@@ -56,9 +50,6 @@ public class ItemsSteps {
         "Expected items table to be visible when checking columns");
   }
 
-  // -------------------------------------------------------------------------
-  // Filter steps — TC-ITEMS-002
-  // -------------------------------------------------------------------------
 
   /**
    * Applies the type filter.
@@ -103,9 +94,6 @@ public class ItemsSteps {
         "Expected multiple items to be visible after clearing the type filter");
   }
 
-  // -------------------------------------------------------------------------
-  // Detail view — TC-ITEMS-003
-  // -------------------------------------------------------------------------
 
   /**
    * Clicks on the item with the given title.
@@ -139,9 +127,6 @@ public class ItemsSteps {
         "Expected detail view to contain '" + title + "'");
   }
 
-  // -------------------------------------------------------------------------
-  // Tree view — TC-ITEMS-004
-  // -------------------------------------------------------------------------
 
   /**
    * Switches to the tree view mode.
@@ -174,9 +159,6 @@ public class ItemsSteps {
         "Expected child items under '" + featureTitle + "' to be visible in tree view");
   }
 
-  // -------------------------------------------------------------------------
-  // Private helpers
-  // -------------------------------------------------------------------------
 
   private ItemsPage getOrCreateItemsPage() {
     ItemsPage page = ScenarioContext.get("itemsPage", ItemsPage.class);
