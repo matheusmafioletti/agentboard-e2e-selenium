@@ -147,6 +147,33 @@ public class AuthApiClient extends BaseApiClient {
   }
 
   /**
+   * Accepts an invite for the given email and password.
+   *
+   * @param token    invite token
+   * @param email    invited user email
+   * @param password invited user password
+   */
+  public void acceptInvite(String token, String email, String password) {
+    JSONObject body = new JSONObject().put("email", email).put("password", password);
+    post("/auth/invites/" + token + "/accept", body.toString(), null, null, "Accept invite");
+  }
+
+  /**
+   * Cancels a pending invite.
+   *
+   * @param jwt      bearer token
+   * @param tenantId tenant identifier
+   * @param inviteId invite identifier
+   */
+  public void cancelInvite(String jwt, String tenantId, String inviteId) {
+    delete(
+        "/auth/tenants/" + tenantId + "/invites/" + inviteId,
+        jwt,
+        null,
+        "Cancel invite");
+  }
+
+  /**
    * Performs a login and returns membership options when tenant selection is required.
    *
    * @param email    user email

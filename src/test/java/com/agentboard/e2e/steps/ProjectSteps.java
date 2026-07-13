@@ -16,10 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class ProjectSteps {
 
-
-  /**
-   * Navigates to the projects listing page.
-   */
   @Given("I am on the projects page")
   public void iAmOnTheProjectsPage() {
     ProjectsPage page = getOrCreateProjectsPage();
@@ -27,10 +23,11 @@ public class ProjectSteps {
     ScenarioContext.set("projectsPage", page);
   }
 
-  /**
-   * Ensures at least one project exists (creates one via API if needed) and navigates to
-   * the projects page.
-   */
+  @When("I navigate to the projects page")
+  public void iNavigateToTheProjectsPage() {
+    iAmOnTheProjectsPage();
+  }
+
   @Given("I am on the projects page with at least one project")
   public void iAmOnTheProjectsPageWithAtLeastOneProject() {
     String jwt = ScenarioContext.get("currentJwt", String.class);
@@ -43,17 +40,9 @@ public class ProjectSteps {
       ScenarioContext.set("currentProjectId", projectId);
     }
 
-    ProjectsPage page = getOrCreateProjectsPage();
-    page.navigate();
-    ScenarioContext.set("projectsPage", page);
+    iAmOnTheProjectsPage();
   }
 
-  /**
-   * Creates two named projects via API and navigates to the projects page.
-   *
-   * @param project1 first project name
-   * @param project2 second project name
-   */
   @Given("I have 2 projects {string} and {string}")
   public void iHave2Projects(String project1, String project2) {
     String jwt = ScenarioContext.get("currentJwt", String.class);
@@ -64,27 +53,15 @@ public class ProjectSteps {
 
     ScenarioContext.set("project1Name", project1);
     ScenarioContext.set("project2Name", project2);
-
-    ProjectsPage page = getOrCreateProjectsPage();
-    page.navigate();
-    ScenarioContext.set("projectsPage", page);
+    iAmOnTheProjectsPage();
   }
 
-
-  /**
-   * Creates a new project with the given name via the UI.
-   *
-   * @param name project display name
-   */
   @When("I create a project named {string}")
   public void iCreateAProjectNamed(String name) {
     getOrCreateProjectsPage().createProject(name);
     ScenarioContext.set("lastCreatedProject", name);
   }
 
-  /**
-   * Clicks on the first project in the list.
-   */
   @When("I click on the first project")
   public void iClickOnTheFirstProject() {
     ProjectsPage page = getOrCreateProjectsPage();
@@ -94,15 +71,9 @@ public class ProjectSteps {
     ScenarioContext.set("clickedProjectName", names.get(0));
   }
 
-  /**
-   * Selects the project with the given name via the project selector (sidebar or dropdown).
-   *
-   * @param projectName project to select
-   */
   @When("I select {string} via the project selector")
   public void iSelectViaTheProjectSelector(String projectName) {
     WebDriver driver = ScenarioContext.getDriver();
-    Environment env = ScenarioContext.get("env", Environment.class);
     org.openqa.selenium.By selectorButton = org.openqa.selenium.By.cssSelector(
         "[data-testid='project-selector'], [data-testid='active-project'], "
         + "[class*='project-selector']");
@@ -113,18 +84,20 @@ public class ProjectSteps {
           + "[contains(normalize-space(.), '" + projectName + "')]");
       driver.findElement(option).click();
     } catch (Exception e) {
-      ProjectsPage page = getOrCreateProjectsPage();
-      page.clickProject(projectName);
+      getOrCreateProjectsPage().clickProject(projectName);
     }
     ScenarioContext.set("selectedProject", projectName);
   }
 
+  @Then("the staging smoke project should be visible in the list")
+  public void theStagingSmokeProjectShouldBeVisibleInTheList() {
+    String projectName = System.getenv().getOrDefault(
+        "E2E_STAGING_PROJECT_NAME", "E2E Smoke Project");
+    ProjectsPage page = getOrCreateProjectsPage();
+    assertTrue(page.isProjectVisible(projectName),
+        "Expected seed project '" + projectName + "' to be visible in the projects list");
+  }
 
-  /**
-   * Asserts the newly created project appears in the project list.
-   *
-   * @param name expected project name
-   */
   @Then("the project {string} should appear in the list")
   public void theProjectShouldAppearInTheList(String name) {
     ProjectsPage page = getOrCreateProjectsPage();
@@ -132,9 +105,6 @@ public class ProjectSteps {
         "Expected project '" + name + "' to be visible in the projects list");
   }
 
-  /**
-   * Asserts the browser navigated to the project detail page.
-   */
   @Then("I should be on the project detail page")
   public void iShouldBeOnTheProjectDetailPage() {
     WebDriver driver = ScenarioContext.getDriver();
@@ -144,11 +114,6 @@ public class ProjectSteps {
         "Expected to be on a project detail page but URL was: " + driver.getCurrentUrl());
   }
 
-  /**
-   * Asserts the sidebar shows the expected active project.
-   *
-   * @param projectName expected project name
-   */
   @Then("the active project shown in sidebar should be {string}")
   public void theActiveProjectShownInSidebarShouldBe(String projectName) {
     WebDriver driver = ScenarioContext.getDriver();
@@ -164,7 +129,6 @@ public class ProjectSteps {
           "Expected project name '" + projectName + "' to appear on the page");
     }
   }
-
 
   private ProjectsPage getOrCreateProjectsPage() {
     ProjectsPage page = ScenarioContext.get("projectsPage", ProjectsPage.class);

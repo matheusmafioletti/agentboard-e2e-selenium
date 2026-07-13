@@ -1,0 +1,10 @@
+{
+  "name": "agentboard-e2e-selenium",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Selenium + Cucumber E2E tests for AgentBoard",
+  "scripts": {
+    "test:local": "mvn test -Pe2e,headless -Dcucumber.filter.tags=\"@e2e and @local and not @wip\"",
+    "test:staging": "mvn test -Pstaging,headless -Dcucumber.filter.tags=\"@e2e and @staging and not @wip\""
+  }
+}

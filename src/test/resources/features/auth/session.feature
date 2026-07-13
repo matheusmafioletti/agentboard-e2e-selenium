@@ -1,6 +1,7 @@
 @e2e @auth
 Feature: Session Management
-  @wip
+
+  @local @wip
   Scenario: Switch workspace without logout
     Given I am authenticated as a user with 2 workspaces "WS A" and "WS B"
     And I am on the dashboard showing "WS A"

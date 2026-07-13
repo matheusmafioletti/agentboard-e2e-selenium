@@ -59,6 +59,28 @@ public class TestDataService {
   }
 
   /**
+   * Accepts an invite for the given email and password.
+   *
+   * @param token    invite token
+   * @param email    invited user email
+   * @param password invited user password
+   */
+  public void acceptInvite(String token, String email, String password) {
+    authClient().acceptInvite(token, email, password);
+  }
+
+  /**
+   * Cancels a pending invite.
+   *
+   * @param jwt      bearer token
+   * @param tenantId tenant identifier
+   * @param inviteId invite identifier
+   */
+  public void cancelInvite(String jwt, String tenantId, String inviteId) {
+    authClient().cancelInvite(jwt, tenantId, inviteId);
+  }
+
+  /**
    * Creates a project in the given tenant.
    *
    * @param jwt      bearer token

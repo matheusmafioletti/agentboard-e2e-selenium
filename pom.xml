@@ -32,6 +32,7 @@
     <env>local</env>
     <browser>chrome</browser>
     <headless>true</headless>
+    <cucumber.filter.tags>@e2e and @local and not @wip</cucumber.filter.tags>
   </properties>
 
   <dependencies>
@@ -124,6 +125,7 @@
             <env>${env}</env>
             <browser>${browser}</browser>
             <headless>${headless}</headless>
+            <cucumber.filter.tags>${cucumber.filter.tags}</cucumber.filter.tags>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -155,6 +157,16 @@
       </properties>
     </profile>
 
+    <!-- E2E compose profile: single-origin via nginx on :8080 -->
+    <profile>
+      <id>e2e</id>
+      <properties>
+        <env>e2e</env>
+        <browser>chrome</browser>
+        <headless>true</headless>
+      </properties>
+    </profile>
+
     <!-- Staging profile: remote app URL from environment variable -->
     <profile>
       <id>staging</id>
@@ -162,6 +174,17 @@
         <env>staging</env>
         <browser>chrome</browser>
         <headless>true</headless>
+        <cucumber.filter.tags>@e2e and @staging and not @wip</cucumber.filter.tags>
+      </properties>
+    </profile>
+
+    <profile>
+      <id>e2e</id>
+      <properties>
+        <env>e2e</env>
+        <browser>chrome</browser>
+        <headless>true</headless>
+        <cucumber.filter.tags>@e2e and @local and not @wip</cucumber.filter.tags>
       </properties>
     </profile>
 

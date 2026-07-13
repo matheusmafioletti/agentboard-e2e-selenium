@@ -1,5 +1,7 @@
 package com.agentboard.e2e.steps;
 
+import com.agentboard.e2e.api.clients.AuthApiClient;
+import com.agentboard.e2e.api.clients.AuthApiClient;
 import com.agentboard.e2e.api.services.TestDataService;
 import com.agentboard.e2e.api.types.UserCredentials;
 import com.agentboard.e2e.api.types.UserInfo;
@@ -21,6 +23,39 @@ import org.openqa.selenium.WebDriver;
  * {@code localStorage} directly, bypassing the login UI for non-auth scenarios.
  */
 public class CommonSteps {
+
+  /**
+   * Authenticates via API using the staging smoke seed user credentials.
+   */
+  @Given("I am authenticated as staging smoke admin")
+  public void iAmAuthenticatedAsStagingSmokeAdmin() {
+    Environment env = ScenarioContext.get("env", Environment.class);
+    WebDriver driver = ScenarioContext.getDriver();
+
+    String email = System.getenv().getOrDefault(
+        "E2E_STAGING_USER_EMAIL", "staging-smoke@agentboard.dev");
+    String password = System.getenv().getOrDefault(
+        "E2E_STAGING_USER_PASSWORD", "StagingSmoke123!");
+    String tenantName = System.getenv().getOrDefault(
+        "E2E_STAGING_TENANT_NAME", "E2E Smoke Workspace");
+
+    AuthApiClient authClient = new AuthApiClient(env.authBaseUrl());
+    var loginData = authClient.login(email, password);
+    String jwt = loginData.getString("token");
+    String tenantId = loginData.getString("tenantId");
+    String role = loginData.optString("role", "ADMIN");
+
+    driver.get(env.appBaseUrl() + "/login");
+    BrowserAuth.setAuthInLocalStorage(
+        driver,
+        jwt,
+        new UserInfo(email, email, tenantId, tenantName, role));
+
+    ScenarioContext.set("currentJwt", jwt);
+    ScenarioContext.set("currentTenantId", tenantId);
+    ScenarioContext.set("currentEmail", email);
+    ScenarioContext.set("currentTenantName", tenantName);
+  }
 
   /**
    * Creates a new user with ADMIN role, creates a project, and authenticates via localStorage.
@@ -132,6 +167,35 @@ public class CommonSteps {
   @Given("I am authenticated as an ADMIN")
   public void iAmAuthenticatedAsAdmin() {
     iAmAuthenticatedAsRegularAdminUser();
+  }
+
+  @Given("I am authenticated as staging smoke admin")
+  public void iAmAuthenticatedAsStagingSmokeAdmin() {
+    Environment env = ScenarioContext.get("env", Environment.class);
+    WebDriver driver = ScenarioContext.getDriver();
+
+    String email = System.getenv().getOrDefault(
+        "E2E_STAGING_USER_EMAIL", "staging-smoke@agentboard.dev");
+    String password = System.getenv().getOrDefault(
+        "E2E_STAGING_USER_PASSWORD", "StagingSmoke123!");
+    String tenantName = System.getenv().getOrDefault(
+        "E2E_STAGING_TENANT_NAME", "E2E Smoke Workspace");
+
+    AuthApiClient authClient = new AuthApiClient(env.authBaseUrl());
+    org.json.JSONObject loginData = authClient.login(email, password);
+    String jwt = loginData.getString("token");
+    String tenantId = loginData.optString("tenantId", "");
+
+    driver.get(env.appBaseUrl() + "/login");
+    BrowserAuth.setAuthInLocalStorage(
+        driver,
+        jwt,
+        new UserInfo(email, email, tenantId, tenantName, loginData.optString("role", "ADMIN")));
+
+    ScenarioContext.set("currentJwt", jwt);
+    ScenarioContext.set("currentTenantId", tenantId);
+    ScenarioContext.set("currentEmail", email);
+    ScenarioContext.set("currentTenantName", tenantName);
   }
 
   /**

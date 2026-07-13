@@ -139,6 +139,24 @@ public class AuthSteps {
 
 
   /**
+   * No-op when seed script has already provisioned the staging smoke user.
+   */
+  @Given("the staging smoke user exists")
+  public void theStagingSmokeUserExists() {
+    // IMPORTANT: relies on seed-e2e-data.sh in compose E2E runs
+  }
+
+  /**
+   * Asserts the sidebar shows the staging workspace name from environment defaults.
+   */
+  @And("the staging workspace should be shown in the sidebar")
+  public void theStagingWorkspaceShouldBeShownInSidebar() {
+    String tenantName = System.getenv().getOrDefault(
+        "E2E_STAGING_TENANT_NAME", "E2E Smoke Workspace");
+    theWorkspaceShouldBeShownInSidebar(tenantName);
+  }
+
+  /**
    * Enters credentials into the login form, resolving the actual email from context when
    * the label matches a previously created user.
    *
@@ -155,6 +173,25 @@ public class AuthSteps {
     String resolvedEmail = resolveEmail(emailLabel);
     loginPage.login(resolvedEmail, password);
     ScenarioContext.set("lastEmailLabel", emailLabel);
+  }
+
+  @When("I enter seed user credentials")
+  public void iEnterSeedUserCredentials() {
+    iEnterStagingSmokeCredentials();
+  }
+
+  @When("I enter staging smoke credentials")
+  public void iEnterStagingSmokeCredentials() {
+    if (loginPage == null) {
+      WebDriver driver = ScenarioContext.getDriver();
+      Environment env = ScenarioContext.get("env", Environment.class);
+      loginPage = new LoginPage(driver, env);
+    }
+    String email = System.getenv().getOrDefault(
+        "E2E_STAGING_USER_EMAIL", "staging-smoke@agentboard.dev");
+    String password = System.getenv().getOrDefault(
+        "E2E_STAGING_USER_PASSWORD", "StagingSmoke123!");
+    loginPage.login(email, password);
   }
 
   /**

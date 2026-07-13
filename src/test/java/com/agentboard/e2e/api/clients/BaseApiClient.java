@@ -69,6 +69,41 @@ public class BaseApiClient {
   }
 
   /**
+   * Sends a JSON DELETE request.
+   *
+   * @param path         API path relative to {@link #baseUrl}
+   * @param jwt          optional bearer token
+   * @param tenantId     optional tenant header
+   * @param errorContext human-readable context for failure messages
+   */
+  protected void delete(String path, String jwt, String tenantId, String errorContext) {
+    try {
+      HttpRequest.Builder builder = HttpRequest.newBuilder()
+          .uri(URI.create(baseUrl + path))
+          .DELETE();
+
+      if (jwt != null) {
+        builder.header("Authorization", "Bearer " + jwt);
+      }
+      if (tenantId != null) {
+        builder.header("X-Tenant-Id", tenantId);
+      }
+
+      HttpResponse<String> response = HTTP.send(
+          builder.build(), HttpResponse.BodyHandlers.ofString());
+
+      if (response.statusCode() >= 400) {
+        throw new RuntimeException(
+            errorContext + " failed (" + response.statusCode() + "): " + response.body());
+      }
+    } catch (RuntimeException re) {
+      throw re;
+    } catch (Exception e) {
+      throw new RuntimeException(errorContext + " failed: " + e.getMessage(), e);
+    }
+  }
+
+  /**
    * Builds standard JSON request headers with optional auth and tenant context.
    *
    * @param jwt      optional bearer token
