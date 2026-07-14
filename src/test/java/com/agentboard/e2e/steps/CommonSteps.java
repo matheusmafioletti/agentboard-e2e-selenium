@@ -169,35 +169,6 @@ public class CommonSteps {
     iAmAuthenticatedAsRegularAdminUser();
   }
 
-  @Given("I am authenticated as staging smoke admin")
-  public void iAmAuthenticatedAsStagingSmokeAdmin() {
-    Environment env = ScenarioContext.get("env", Environment.class);
-    WebDriver driver = ScenarioContext.getDriver();
-
-    String email = System.getenv().getOrDefault(
-        "E2E_STAGING_USER_EMAIL", "staging-smoke@agentboard.dev");
-    String password = System.getenv().getOrDefault(
-        "E2E_STAGING_USER_PASSWORD", "StagingSmoke123!");
-    String tenantName = System.getenv().getOrDefault(
-        "E2E_STAGING_TENANT_NAME", "E2E Smoke Workspace");
-
-    AuthApiClient authClient = new AuthApiClient(env.authBaseUrl());
-    org.json.JSONObject loginData = authClient.login(email, password);
-    String jwt = loginData.getString("token");
-    String tenantId = loginData.optString("tenantId", "");
-
-    driver.get(env.appBaseUrl() + "/login");
-    BrowserAuth.setAuthInLocalStorage(
-        driver,
-        jwt,
-        new UserInfo(email, email, tenantId, tenantName, loginData.optString("role", "ADMIN")));
-
-    ScenarioContext.set("currentJwt", jwt);
-    ScenarioContext.set("currentTenantId", tenantId);
-    ScenarioContext.set("currentEmail", email);
-    ScenarioContext.set("currentTenantName", tenantName);
-  }
-
   /**
    * Creates an ADMIN user and navigates to the users management page.
    */
