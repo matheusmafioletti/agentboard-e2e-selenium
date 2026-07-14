@@ -164,6 +164,7 @@
         <env>e2e</env>
         <browser>chrome</browser>
         <headless>true</headless>
+        <cucumber.filter.tags>@e2e and @local and not @wip</cucumber.filter.tags>
       </properties>
     </profile>
 
@@ -175,16 +176,6 @@
         <browser>chrome</browser>
         <headless>true</headless>
         <cucumber.filter.tags>@e2e and @staging and not @wip</cucumber.filter.tags>
-      </properties>
-    </profile>
-
-    <profile>
-      <id>e2e</id>
-      <properties>
-        <env>e2e</env>
-        <browser>chrome</browser>
-        <headless>true</headless>
-        <cucumber.filter.tags>@e2e and @local and not @wip</cucumber.filter.tags>
       </properties>
     </profile>
 
